@@ -103,13 +103,17 @@ defmodule Recipe do
       end
 
       defp all_steps_defined?(definitions, steps) do
-        missing_steps = Enum.filter(steps, fn(step) ->
-                          :missing == Keyword.get(definitions, step, :missing)
-                        end)
+        missing_steps = Enum.reduce(steps, [], fn(step, missing_steps) ->
+          case Keyword.get(definitions, step, :not_defined) do
+            :not_defined -> [step | missing_steps]
+            arity when arity !== 1 -> [step | missing_steps]
+            1 -> missing_steps
+          end
+        end)
 
         case missing_steps do
           [] -> :ok
-          _other -> {:missing, missing_steps}
+          _other -> {:missing, Enum.reverse(missing_steps)}
         end
       end
     end
