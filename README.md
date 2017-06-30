@@ -1,6 +1,7 @@
 # Recipe
 
 [![Build Status](https://travis-ci.org/cloud8421/recipe.svg?branch=master)](https://travis-ci.org/cloud8421/recipe)
+[![Docs Status](https://inch-ci.org/github/cloud8421/recipe.svg?branch=inch-ci-support)](https://inch-ci.org/github/cloud8421/recipe)
 
 ## Intro
 
