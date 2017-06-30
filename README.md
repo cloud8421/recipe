@@ -10,6 +10,8 @@ For example, you may wanna parse some incoming data, write to two different data
 then push some notifications. If anything fails, you wanna rollback specific changes in different
 data stores. `Recipe` allows you to do that.
 
+Heavily inspired by the `ktn_recipe` module included in [inaka/erlang-katana](https://github.com/inaka/erlang-katana).
+
 ## Core ideas
 
 - A workflow is a state machine
