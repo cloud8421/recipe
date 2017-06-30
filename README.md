@@ -29,7 +29,7 @@ end
 
 ## Example
 
-```
+```elixir
 defmodule Example do
   use Recipe
 
