@@ -1,5 +1,7 @@
 # Recipe
 
+[![Build Status](https://travis-ci.org/cloud8421/recipe.svg?branch=master)](https://travis-ci.org/cloud8421/recipe)
+
 ## Intro
 
 The `Recipe` module allows implementing multi-step, reversible workflows.
