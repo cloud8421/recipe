@@ -74,9 +74,48 @@ defmodule Recipe do
   """
   @callback handle_error(step, error, State.t) :: term
 
+  defmodule InvalidRecipe do
+    @moduledoc """
+    This exception is raised whenever a module that implements the `Recipe`
+    behaviour does not define a function definition for each listed step.
+    """
+    defexception [:message]
+  end
+
   defmacro __using__(_opts) do
     quote do
       @behaviour Recipe
+
+      @after_compile __MODULE__
+
+      @doc false
+      def __after_compile__(env, bytecode) do
+        steps = __MODULE__.steps()
+        definitions = Module.definitions_in(__MODULE__)
+
+        case all_steps_defined?(definitions, steps) do
+          :ok ->
+            :ok
+          {:missing, missing_steps} ->
+            raise InvalidRecipe,
+              message: "The recipe #{__MODULE__} misses step definitions for #{inspect missing_steps}"
+        end
+      end
+
+      defp all_steps_defined?(definitions, steps) do
+        missing_steps = Enum.reduce(steps, [], fn(step, missing_steps) ->
+          case Keyword.get(definitions, step, :not_defined) do
+            :not_defined -> [step | missing_steps]
+            arity when arity !== 1 -> [step | missing_steps]
+            1 -> missing_steps
+          end
+        end)
+
+        case missing_steps do
+          [] -> :ok
+          _other -> {:missing, Enum.reverse(missing_steps)}
+        end
+      end
     end
   end
 
