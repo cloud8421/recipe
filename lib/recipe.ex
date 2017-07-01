@@ -127,10 +127,12 @@ defmodule Recipe do
   """
 
   alias Recipe.State
+  require Logger
 
   @type step :: atom
   @type recipe_module :: atom
   @type error :: term
+  @type debug_opts :: [{:log_steps, boolean}]
 
   @doc """
   Lists all steps included in the recipe, e.g. `[:square, :double]`
@@ -218,24 +220,47 @@ defmodule Recipe do
 
   @doc """
   Runs a recipe, identified by a module which implements the `Recipe`
-  behaviour, also allowing to specify the initial state.
-  """
-  @spec run(recipe_module, State.t) :: {:ok, term} | {:error, term}
-  def run(recipe_module, initial_state) do
-    steps = recipe_module.steps()
+  behaviour, allowing to specify the initial state.
 
-    do_run(steps, %{initial_state | recipe_module: recipe_module})
+  Supports an optional third argument (a keyword list) for extra options:
+
+  - `:log_steps`: when true, log (at debug level) each step with the updated state
+
+  ### Example
+
+  ```
+  Recipe.run(Workflow, Recipe.empty_state(), log_steps: true)
+  ```
+  """
+  @spec run(recipe_module, State.t, debug_opts) :: {:ok, term} | {:error, term}
+  def run(recipe_module, initial_state, debug_opts \\ []) do
+    steps = recipe_module.steps()
+    final_debug_opts = Keyword.merge(initial_state.debug_opts, debug_opts)
+
+    state = %{initial_state | recipe_module: recipe_module,
+                              debug_opts: final_debug_opts}
+
+    do_run(steps, state)
   end
 
   defp do_run([], state) do
     state.recipe_module.handle_result(state)
   end
   defp do_run([step | remaining_steps], state) do
+    maybe_log_step(step, state)
     case apply(state.recipe_module, step, [state]) do
       {:ok, new_state} ->
         do_run(remaining_steps, new_state)
       error ->
         {:error, state.recipe_module.handle_error(step, error, state)}
+    end
+  end
+
+  defp maybe_log_step(step, state) do
+    if Keyword.get(state.debug_opts, :log_steps) do
+      Logger.debug(fn() ->
+        "recipe=#{inspect state.recipe_module} step=#{step} assigns=#{inspect state.assigns}"
+      end)
     end
   end
 end
