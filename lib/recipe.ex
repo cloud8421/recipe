@@ -217,12 +217,6 @@ defmodule Recipe do
   end
 
   @doc """
-  Runs a recipe, identified by a module which implements the `Recipe` behaviour.
-  """
-  @spec run(recipe_module) :: {:ok, term} | {:error, term}
-  def run(recipe_module), do: run(recipe_module, empty_state())
-
-  @doc """
   Runs a recipe, identified by a module which implements the `Recipe`
   behaviour, also allowing to specify the initial state.
   """
