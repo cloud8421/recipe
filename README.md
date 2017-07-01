@@ -147,3 +147,4 @@ end
 - Run tests with `mix test`
 - Run dialyzer with `mix dialyzer`
 - Run credo with `mix credo`
+- Build docs with `MIX_ENV=docs mix docs`
