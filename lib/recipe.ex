@@ -208,9 +208,9 @@ defmodule Recipe do
 
   Keys are available for reading under the `assigns` key.
 
-  iex> state = Recipe.empty_state |> Recipe.assign(:user_id, 1)
-  iex> state.assigns.user_id
-  1
+      iex> state = Recipe.empty_state |> Recipe.assign(:user_id, 1)
+      iex> state.assigns.user_id
+      1
   """
   @spec assign(State.t, atom, term) :: State.t
   def assign(state, key, value) do
