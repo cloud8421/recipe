@@ -22,6 +22,7 @@ defmodule Recipe do
   - interaction with services that simply don't support transactions
   - composing multiple workflows that can share steps (with the
     help of `Kernel.defdelegate/2`)
+  - trace workflows execution via a correlation id
 
   You can avoid using this library if:
 
@@ -39,6 +40,7 @@ defmodule Recipe do
   - Each step is a separate function that receives a state
     with the result of all previous steps
   - Each step should be easily testable in isolation
+  - Each workflow run is identified by a correlation id
 
   ### Example
 
@@ -74,7 +76,7 @@ defmodule Recipe do
                         :broadcast_new_message]
 
         def handle_result(state) do
-          {:ok, state.assigns.conversation}
+          state.assigns.conversation
         end
 
         def handle_error(:create_initial_message, _error, state) do
@@ -126,13 +128,13 @@ defmodule Recipe do
       end
   """
 
-  alias Recipe.State
+  alias Recipe.{State, UUID}
   require Logger
 
   @type step :: atom
   @type recipe_module :: atom
   @type error :: term
-  @type debug_opts :: [{:log_steps, boolean}]
+  @type run_opts :: [{:log_steps, boolean} | {:correlation_id, UUID.t}]
 
   @doc """
   Lists all steps included in the recipe, e.g. `[:square, :double]`
@@ -222,9 +224,16 @@ defmodule Recipe do
   Runs a recipe, identified by a module which implements the `Recipe`
   behaviour, allowing to specify the initial state.
 
+  In case of a successful run, it will return a 3-element tuple `{:ok,
+  correlation_id, result}`, where `correlation_id` is a uuid that can be used
+  to connect this workflow with another one and `result` is the return value of
+  the `handle_result/1` callback.
+
   Supports an optional third argument (a keyword list) for extra options:
 
   - `:log_steps`: when true, log (at debug level) each step with the updated state
+  - `:correlation_id`: you can override the automatically generated correlation id
+    by passing it as an option. A uuid can be generated with `Recipe.UUID.generate/0`
 
   ### Example
 
@@ -232,19 +241,21 @@ defmodule Recipe do
   Recipe.run(Workflow, Recipe.empty_state(), log_steps: true)
   ```
   """
-  @spec run(recipe_module, State.t, debug_opts) :: {:ok, term} | {:error, term}
-  def run(recipe_module, initial_state, debug_opts \\ []) do
+  @spec run(recipe_module, State.t, run_opts) :: {:ok, UUID.t, term} | {:error, term}
+  def run(recipe_module, initial_state, run_opts \\ []) do
     steps = recipe_module.steps()
-    final_debug_opts = Keyword.merge(initial_state.debug_opts, debug_opts)
+    final_run_opts = Keyword.merge(initial_state.run_opts, run_opts)
+    correlation_id = Keyword.get(run_opts, :correlation_id, UUID.generate())
 
     state = %{initial_state | recipe_module: recipe_module,
-                              debug_opts: final_debug_opts}
+                              correlation_id: correlation_id,
+                              run_opts: final_run_opts}
 
     do_run(steps, state)
   end
 
   defp do_run([], state) do
-    state.recipe_module.handle_result(state)
+    {:ok, state.correlation_id, state.recipe_module.handle_result(state)}
   end
   defp do_run([step | remaining_steps], state) do
     maybe_log_step(step, state)
@@ -257,9 +268,12 @@ defmodule Recipe do
   end
 
   defp maybe_log_step(step, state) do
-    if Keyword.get(state.debug_opts, :log_steps) do
+    if Keyword.get(state.run_opts, :log_steps) do
       Logger.debug(fn() ->
-        "recipe=#{inspect state.recipe_module} step=#{step} assigns=#{inspect state.assigns}"
+        %{recipe_module: recipe,
+          correlation_id: id,
+          assigns: assigns} = state
+        "recipe=#{inspect recipe} correlation_id=#{id} step=#{step} assigns=#{inspect assigns}"
       end)
     end
   end

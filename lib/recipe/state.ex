@@ -1,13 +1,15 @@
 defmodule Recipe.State do
   @moduledoc false
 
-  @default_debug_opts [log_steps: false]
+  @default_run_opts [log_steps: false]
 
   defstruct assigns: %{},
             recipe_module: NoOp,
-            debug_opts: @default_debug_opts
+            correlation_id: nil,
+            run_opts: @default_run_opts
 
   @type t :: %__MODULE__{assigns: %{},
                          recipe_module: module,
-                         debug_opts: Recipe.debug_opts}
+                         correlation_id: nil | Recipe.UUID.t,
+                         run_opts: Recipe.run_opts}
 end
