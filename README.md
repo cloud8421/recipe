@@ -38,7 +38,7 @@ Heavily inspired by the `ktn_recipe` module included in [inaka/erlang-katana](ht
 
 ## Core ideas
 
-- A workflow is a state machine
+- A workflow is as a set of discreet steps
 - Each step can have a specific error handling scenario
 - Each step is a separate function that receives a state
   with the result of all previous steps
@@ -74,7 +74,7 @@ defmodule StartNewConversation do
   ### Public API
 
   def run(user_id, initial_message_text) do
-    state = Recipe.empty_state
+    state = Recipe.initial_state
             |> Recipe.assign(:user_id, user_id)
             |> Recipe.assign(:initial_message_text, initial_message_text)
 
