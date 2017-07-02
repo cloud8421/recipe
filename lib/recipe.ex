@@ -136,15 +136,19 @@ defmodule Recipe do
   defstruct assigns: %{},
             recipe_module: NoOp,
             correlation_id: nil,
+            log_function: {__MODULE__, :log_step},
             run_opts: @default_run_opts
 
   @type step :: atom
   @type recipe_module :: atom
   @type error :: term
   @type run_opts :: [{:log_steps, boolean} | {:correlation_id, UUID.t}]
+  @type function_name :: atom
+  @type log_function :: {module, function_name}
   @type t :: %__MODULE__{assigns: %{},
                          recipe_module: module,
                          correlation_id: nil | Recipe.UUID.t,
+                         log_function: log_function,
                          run_opts: Recipe.run_opts}
 
   @doc """
@@ -241,6 +245,10 @@ defmodule Recipe do
   Supports an optional third argument (a keyword list) for extra options:
 
   - `:log_steps`: when true, log (at debug level) each step with the updated state
+  - `:log_function`: this value is a 2-element tuple `{module_name, function_name}`;
+    the function will receive two values, the current step name and the current state,
+    and can be used to log the current step execution. By default the `Recipe.log_step/2`
+    function is used. See `t:Recipe.log_function/0` as well to check its typing.
   - `:correlation_id`: you can override the automatically generated correlation id
     by passing it as an option. A uuid can be generated with `Recipe.UUID.generate/0`
 
@@ -255,35 +263,47 @@ defmodule Recipe do
     steps = recipe_module.steps()
     final_run_opts = Keyword.merge(initial_state.run_opts, run_opts)
     correlation_id = Keyword.get(run_opts, :correlation_id, UUID.generate())
+    log_function = Keyword.get(run_opts, :log_function, initial_state.log_function)
 
     state = %{initial_state | recipe_module: recipe_module,
                               correlation_id: correlation_id,
+                              log_function: log_function,
                               run_opts: final_run_opts}
 
     do_run(steps, state)
+  end
+
+  @doc """
+  Logs a step execution (debug level).
+
+  This function is used by default when a recipe is run with `log_steps: true` and
+  can be overridden by passing `log_function: {module, function_name}`. See the documentation
+  for `Recipe.run/3` for more information.
+  """
+  @spec log_step(step, t) :: :ok
+  def log_step(step, state) do
+    Logger.debug(fn() ->
+      %{recipe_module: recipe,
+        correlation_id: id,
+        assigns: assigns} = state
+      "recipe=#{inspect recipe} correlation_id=#{id} step=#{step} assigns=#{inspect assigns}"
+    end)
   end
 
   defp do_run([], state) do
     {:ok, state.correlation_id, state.recipe_module.handle_result(state)}
   end
   defp do_run([step | remaining_steps], state) do
-    maybe_log_step(step, state)
+    if Keyword.get(state.run_opts, :log_steps) do
+      {module_name, function_name} = state.log_function
+      apply(module_name, function_name, [step, state])
+    end
+
     case apply(state.recipe_module, step, [state]) do
       {:ok, new_state} ->
         do_run(remaining_steps, new_state)
       error ->
         {:error, state.recipe_module.handle_error(step, error, state)}
-    end
-  end
-
-  defp maybe_log_step(step, state) do
-    if Keyword.get(state.run_opts, :log_steps) do
-      Logger.debug(fn() ->
-        %{recipe_module: recipe,
-          correlation_id: id,
-          assigns: assigns} = state
-        "recipe=#{inspect recipe} correlation_id=#{id} step=#{step} assigns=#{inspect assigns}"
-      end)
     end
   end
 end

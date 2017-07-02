@@ -24,6 +24,10 @@ defmodule RecipeTest do
       number = state.assigns.number
       {:ok, Recipe.assign(state, :number, number * 2)}
     end
+
+    def log_step(_step, _state) do
+      send(self(), :log_step_called)
+    end
   end
 
   describe "recipe run" do
@@ -59,6 +63,16 @@ defmodule RecipeTest do
         Recipe.run(Successful, state, log_steps: true,
                                       correlation_id: correlation_id)
       end) == expected_log
+    end
+
+    test "supports a custom log function" do
+      state = Recipe.initial_state
+              |> Recipe.assign(:number, 4)
+
+      Recipe.run(Successful, state, log_steps: true,
+                                    log_function: {Successful, :log_step})
+
+      assert_receive :log_step_called
     end
   end
 end
