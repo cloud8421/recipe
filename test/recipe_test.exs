@@ -26,7 +26,7 @@ defmodule RecipeTest do
     end
 
     def log_step(_step, _state) do
-      send(self(), :log_step_called)
+      send(self(), :m_f_log)
     end
   end
 
@@ -65,14 +65,27 @@ defmodule RecipeTest do
       end) == expected_log
     end
 
-    test "supports a custom log function" do
+    test "supports a custom log function in {m, f} form" do
       state = Recipe.initial_state
               |> Recipe.assign(:number, 4)
 
       Recipe.run(Successful, state, log_steps: true,
                                     log_function: {Successful, :log_step})
 
-      assert_receive :log_step_called
+      assert_receive :m_f_log
+    end
+
+    test "supports a custom log function in fn form" do
+      state = Recipe.initial_state
+              |> Recipe.assign(:number, 4)
+      log_function = fn(_step, _state) ->
+        send(self(), :fn_called)
+      end
+
+      Recipe.run(Successful, state, log_steps: true,
+                                    log_function: log_function)
+
+      assert_receive :fn_called
     end
   end
 end
