@@ -22,7 +22,7 @@ defmodule Recipe.Mixfile do
   end
 
   def application do
-    [extra_applications: []]
+    [extra_applications: [:logger]]
   end
 
   defp deps do

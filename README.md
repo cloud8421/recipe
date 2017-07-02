@@ -25,6 +25,7 @@ Ideal use cases are:
 - interaction with services that simply don't support transactions
 - composing multiple workflows that can share steps (with the
   help of `Kernel.defdelegate/2`)
+- trace workflows execution via a correlation id
 
 You can avoid using this library if:
 
@@ -89,7 +90,7 @@ defmodule StartNewConversation do
                   :broadcast_new_message]
 
   def handle_result(state) do
-    {:ok, state.assigns.conversation}
+    state.assigns.conversation
   end
 
   def handle_error(:create_initial_message, _error, state) do
