@@ -74,7 +74,7 @@ defmodule StartNewConversation do
   ### Public API
 
   def run(user_id, initial_message_text) do
-    state = Recipe.empty_state
+    state = Recipe.initial_state
             |> Recipe.assign(:user_id, user_id)
             |> Recipe.assign(:initial_message_text, initial_message_text)
 

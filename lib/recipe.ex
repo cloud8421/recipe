@@ -60,7 +60,7 @@ defmodule Recipe do
         ### Public API
 
         def run(user_id, initial_message_text) do
-          state = Recipe.empty_state
+          state = Recipe.initial_state
                   |> Recipe.assign(:user_id, user_id)
                   |> Recipe.assign(:initial_message_text, initial_message_text)
 
@@ -128,13 +128,24 @@ defmodule Recipe do
       end
   """
 
-  alias Recipe.{State, UUID}
+  alias Recipe.UUID
   require Logger
+
+  @default_run_opts [log_steps: false]
+
+  defstruct assigns: %{},
+            recipe_module: NoOp,
+            correlation_id: nil,
+            run_opts: @default_run_opts
 
   @type step :: atom
   @type recipe_module :: atom
   @type error :: term
   @type run_opts :: [{:log_steps, boolean} | {:correlation_id, UUID.t}]
+  @type t :: %__MODULE__{assigns: %{},
+                         recipe_module: module,
+                         correlation_id: nil | Recipe.UUID.t,
+                         run_opts: Recipe.run_opts}
 
   @doc """
   Lists all steps included in the recipe, e.g. `[:square, :double]`
@@ -145,12 +156,12 @@ defmodule Recipe do
   Invoked at the end of the recipe, it receives the state obtained at the
   last step.
   """
-  @callback handle_result(State.t) :: term
+  @callback handle_result(t) :: term
   @doc """
   Invoked any time a step fails. Receives the name of the failed step,
   the error and the state.
   """
-  @callback handle_error(step, error, State.t) :: term
+  @callback handle_error(step, error, t) :: term
 
   defmodule InvalidRecipe do
     @moduledoc """
@@ -200,21 +211,19 @@ defmodule Recipe do
   @doc """
   Returns an empty recipe state. Useful in conjunction with `Recipe.run/2`.
   """
-  @spec empty_state() :: State.t
-  def empty_state do
-    %State{}
-  end
+  @spec initial_state() :: t
+  def initial_state, do: %__MODULE__{}
 
   @doc """
   Assigns a new value in the recipe state under the specified key.
 
   Keys are available for reading under the `assigns` key.
 
-      iex> state = Recipe.empty_state |> Recipe.assign(:user_id, 1)
+      iex> state = Recipe.initial_state |> Recipe.assign(:user_id, 1)
       iex> state.assigns.user_id
       1
   """
-  @spec assign(State.t, atom, term) :: State.t
+  @spec assign(t, atom, term) :: t
   def assign(state, key, value) do
     new_assigns = Map.put(state.assigns, key, value)
     %{state | assigns: new_assigns}
@@ -238,10 +247,10 @@ defmodule Recipe do
   ### Example
 
   ```
-  Recipe.run(Workflow, Recipe.empty_state(), log_steps: true)
+  Recipe.run(Workflow, Recipe.initial_state(), log_steps: true)
   ```
   """
-  @spec run(recipe_module, State.t, run_opts) :: {:ok, UUID.t, term} | {:error, term}
+  @spec run(recipe_module, t, run_opts) :: {:ok, UUID.t, term} | {:error, term}
   def run(recipe_module, initial_state, run_opts \\ []) do
     steps = recipe_module.steps()
     final_run_opts = Keyword.merge(initial_state.run_opts, run_opts)

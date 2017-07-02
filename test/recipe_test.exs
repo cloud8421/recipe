@@ -28,7 +28,7 @@ defmodule RecipeTest do
 
   describe "recipe run" do
     test "returns the final result" do
-      state = Recipe.empty_state
+      state = Recipe.initial_state
               |> Recipe.assign(:number, 4)
 
       assert {:ok, _, 32} = Recipe.run(Successful, state)
@@ -36,7 +36,7 @@ defmodule RecipeTest do
 
     test "it reuses a correlation id if passed" do
       correlation_id = Recipe.UUID.generate()
-      state = Recipe.empty_state
+      state = Recipe.initial_state
               |> Recipe.assign(:number, 4)
 
       assert {:ok, correlation_id, 32} ==
@@ -53,7 +53,7 @@ defmodule RecipeTest do
       """
 
       assert capture_log(fn ->
-        state = Recipe.empty_state
+        state = Recipe.initial_state
                 |> Recipe.assign(:number, 4)
 
         Recipe.run(Successful, state, log_steps: true,
