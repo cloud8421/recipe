@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 0.3.0 (03/07/2017)
+
+- Renames `Recipe.empty_state/0` to `Recipe.initial_state/0`
+- Adds ability to use custom step log function
+
 ### 0.2.0 (02/07/2017)
 
 - Removes `Recipe.run/1`

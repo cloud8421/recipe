@@ -51,7 +51,7 @@ by adding `recipe` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:recipe, "~> 0.2.0"}]
+  [{:recipe, "~> 0.3.0"}]
 end
 ```
 
