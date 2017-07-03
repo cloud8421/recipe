@@ -149,3 +149,11 @@ end
 - Run dialyzer with `mix dialyzer`
 - Run credo with `mix credo`
 - Build docs with `MIX_ENV=docs mix docs`
+
+## Special thanks
+
+Special thanks go to the following people for their help in the initial design phase for this library:
+
+- Ju Liu ([@arkham](https://github.com/Arkham))
+- Emanuel Mota ([@emanuel](https://github.com/emanuel))
+- Miguel Pinto ([@firewalkr](https://github.com/firewalkr))
