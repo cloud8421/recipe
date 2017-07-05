@@ -41,6 +41,7 @@ defmodule Recipe do
     with the result of all previous steps
   - Each step should be easily testable in isolation
   - Each workflow run is identified by a correlation id
+  - Each workflow needs to be easily audited via logs or an event store
 
   ### Example
 
@@ -124,6 +125,42 @@ defmodule Recipe do
         def broadcast_new_message(state) do
           Dispatcher.broadcast("message-created", state.assigns.initial_message)
           {:ok, state}
+        end
+      end
+
+  ### Telemetry
+
+  A recipe run can be instrumented with callbacks for start, end and each step execution.
+
+  To instrument a recipe run, it's sufficient to call:
+
+      Recipe.run(module, initial_state, enable_telemetry: true)
+
+  The default setting for telemetry is to use the `Recipe.Debug` module, but you can implement
+  your own by using the `Recipe.Telemetry` behaviour, definining the needed callbacks and run
+  the recipe as follows:
+
+      Recipe.run(module, initial_state, enable_telemetry: true, telemetry_module: MyModule)
+
+  An example of a compliant module can be:
+
+      defmodule Recipe.Debug do
+        use Recipe.Telemetry
+
+        def on_start(state) do
+          IO.inspect(state)
+        end
+
+        def on_finish(state) do
+          IO.inspect(state)
+        end
+
+        def on_success(step, state, elapsed_microseconds) do
+          IO.inspect([step, state, elapsed_microseconds])
+        end
+
+        def on_error(step, error, state, elapsed_microseconds) do
+          IO.inspect([step, error, state, elapsed_microseconds])
         end
       end
   """
