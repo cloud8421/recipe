@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 0.4.0 (05/07/2017)
+
+- Replaces log functionality with proper telemetry,
+  which includes more hooks and execution time
+
 ### 0.3.0 (03/07/2017)
 
 - Renames `Recipe.empty_state/0` to `Recipe.initial_state/0`
