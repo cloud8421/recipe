@@ -1,8 +1,25 @@
 defmodule RecipeTest do
   use ExUnit.Case
-  import ExUnit.CaptureLog
 
   doctest Recipe
+
+  defmodule Successful.Debug do
+    def on_start(_state) do
+      send(self(), :on_start)
+    end
+
+    def on_finish(_state) do
+      send(self(), :on_finish)
+    end
+
+    def on_success(step, _state, _elapsed) do
+      send(self(), {:on_success, step})
+    end
+
+    def on_error(_step, _error, _state, _elapsed) do
+      send(self(), :on_error)
+    end
+  end
 
   defmodule Successful do
     use Recipe
@@ -24,10 +41,6 @@ defmodule RecipeTest do
       number = state.assigns.number
       {:ok, Recipe.assign(state, :number, number * 2)}
     end
-
-    def log_step(_step, _state) do
-      send(self(), :m_f_log)
-    end
   end
 
   describe "recipe run" do
@@ -48,44 +61,29 @@ defmodule RecipeTest do
     end
   end
 
-  describe "debug options" do
-    test "supports logging to debug" do
+  describe "recipe state" do
+    test "defaults" do
+      state = Recipe.initial_state
+
+      assert state.telemetry_module == Recipe.Debug
+      assert state.run_opts == [enable_telemetry: false]
+    end
+  end
+
+  describe "telemetry support" do
+    test "can use a custom telemetry module" do
       correlation_id = Recipe.UUID.generate()
-      expected_log = """
-      [debug] recipe=RecipeTest.Successful correlation_id=#{correlation_id} step=square assigns=%{number: 4}
-      [debug] recipe=RecipeTest.Successful correlation_id=#{correlation_id} step=double assigns=%{number: 16}
-      """
-
-      assert capture_log(fn ->
-        state = Recipe.initial_state
-                |> Recipe.assign(:number, 4)
-
-        Recipe.run(Successful, state, log_steps: true,
-                                      correlation_id: correlation_id)
-      end) == expected_log
-    end
-
-    test "supports a custom log function in {m, f} form" do
       state = Recipe.initial_state
               |> Recipe.assign(:number, 4)
 
-      Recipe.run(Successful, state, log_steps: true,
-                                    log_function: {Successful, :log_step})
+      Recipe.run(Successful, state, enable_telemetry: true,
+                                    telemetry_module: Successful.Debug,
+                                    correlation_id: correlation_id)
 
-      assert_receive :m_f_log
-    end
-
-    test "supports a custom log function in fn form" do
-      state = Recipe.initial_state
-              |> Recipe.assign(:number, 4)
-      log_function = fn(_step, _state) ->
-        send(self(), :fn_called)
-      end
-
-      Recipe.run(Successful, state, log_steps: true,
-                                    log_function: log_function)
-
-      assert_receive :fn_called
+      assert_receive :on_start
+      assert_receive {:on_success, :square}
+      assert_receive {:on_success, :double}
+      assert_receive :on_finish
     end
   end
 end
