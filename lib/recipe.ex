@@ -41,6 +41,7 @@ defmodule Recipe do
     with the result of all previous steps
   - Each step should be easily testable in isolation
   - Each workflow run is identified by a correlation id
+  - Each workflow needs to be easily audited via logs or an event store
 
   ### Example
 
@@ -126,29 +127,65 @@ defmodule Recipe do
           {:ok, state}
         end
       end
+
+  ### Telemetry
+
+  A recipe run can be instrumented with callbacks for start, end and each step execution.
+
+  To instrument a recipe run, it's sufficient to call:
+
+      Recipe.run(module, initial_state, enable_telemetry: true)
+
+  The default setting for telemetry is to use the `Recipe.Debug` module, but you can implement
+  your own by using the `Recipe.Telemetry` behaviour, definining the needed callbacks and run
+  the recipe as follows:
+
+      Recipe.run(module, initial_state, enable_telemetry: true, telemetry_module: MyModule)
+
+  An example of a compliant module can be:
+
+      defmodule Recipe.Debug do
+        use Recipe.Telemetry
+
+        def on_start(state) do
+          IO.inspect(state)
+        end
+
+        def on_finish(state) do
+          IO.inspect(state)
+        end
+
+        def on_success(step, state, elapsed_microseconds) do
+          IO.inspect([step, state, elapsed_microseconds])
+        end
+
+        def on_error(step, error, state, elapsed_microseconds) do
+          IO.inspect([step, error, state, elapsed_microseconds])
+        end
+      end
   """
 
   alias Recipe.UUID
   require Logger
 
-  @default_run_opts [log_steps: false]
+  @default_run_opts [enable_telemetry: false]
 
   defstruct assigns: %{},
             recipe_module: NoOp,
             correlation_id: nil,
-            log_function: {__MODULE__, :log_step},
+            telemetry_module: Recipe.Debug,
             run_opts: @default_run_opts
 
   @type step :: atom
   @type recipe_module :: atom
   @type error :: term
-  @type run_opts :: [{:log_steps, boolean} | {:correlation_id, UUID.t}]
+  @type run_opts :: [{:enable_telemetry, boolean} | {:correlation_id, UUID.t}]
   @type function_name :: atom
-  @type log_function :: {module, function_name} | ((step, t) -> term)
+  @type telemetry_module :: module
   @type t :: %__MODULE__{assigns: %{},
                          recipe_module: module,
                          correlation_id: nil | Recipe.UUID.t,
-                         log_function: log_function,
+                         telemetry_module: telemetry_module,
                          run_opts: Recipe.run_opts}
 
   @doc """
@@ -244,19 +281,19 @@ defmodule Recipe do
 
   Supports an optional third argument (a keyword list) for extra options:
 
-  - `:log_steps`: when true, log (at debug level) each step with the updated state
-  - `:log_function`: this value can either be a 2-element tuple `{module_name,
-    function_name}` or a plain function; the function will receive two values,
-    the current step name and the current state, and can be used to log the
-    current step execution. By default the `Recipe.log_step/2` function is used.
-    See `t:Recipe.log_function/0` as well to check its typing.
+  - `:enable_telemetry`: when true, uses the configured telemetry module to log
+    and collect metrics around the recipe execution
+  - `:telemetry_module`: the telemetry module to use when logging events and metrics.
+    The module needs to implement the `Recipe.Telemetry` behaviour (see related docs),
+    it's set by default to `Recipe.Debug` and it's only used when `:enable_telemetry`
+    is set to true
   - `:correlation_id`: you can override the automatically generated correlation id
     by passing it as an option. A uuid can be generated with `Recipe.UUID.generate/0`
 
   ### Example
 
   ```
-  Recipe.run(Workflow, Recipe.initial_state(), log_steps: true)
+  Recipe.run(Workflow, Recipe.initial_state(), enable_telemetry: true)
   ```
   """
   @spec run(recipe_module, t, run_opts) :: {:ok, UUID.t, term} | {:error, term}
@@ -264,55 +301,53 @@ defmodule Recipe do
     steps = recipe_module.steps()
     final_run_opts = Keyword.merge(initial_state.run_opts, run_opts)
     correlation_id = Keyword.get(run_opts, :correlation_id, UUID.generate())
-    log_function = Keyword.get(run_opts, :log_function, initial_state.log_function)
+    telemetry_module = Keyword.get(run_opts, :telemetry_module, initial_state.telemetry_module)
 
     state = %{initial_state | recipe_module: recipe_module,
                               correlation_id: correlation_id,
-                              log_function: log_function,
+                              telemetry_module: telemetry_module,
                               run_opts: final_run_opts}
 
+    maybe_on_start(state)
     do_run(steps, state)
   end
 
-  @doc """
-  Logs a step execution (debug level).
-
-  This function is used by default when a recipe is run with `log_steps: true` and
-  can be overridden by passing `log_function: {module, function_name}`. See the documentation
-  for `Recipe.run/3` for more information.
-  """
-  @spec log_step(step, t) :: :ok
-  def log_step(step, state) do
-    Logger.debug(fn() ->
-      %{recipe_module: recipe,
-        correlation_id: id,
-        assigns: assigns} = state
-      "recipe=#{inspect recipe} correlation_id=#{id} step=#{step} assigns=#{inspect assigns}"
-    end)
-  end
-
   defp do_run([], state) do
+    maybe_on_finish(state)
     {:ok, state.correlation_id, state.recipe_module.handle_result(state)}
   end
   defp do_run([step | remaining_steps], state) do
-    maybe_log_step(step, state)
-
-    case apply(state.recipe_module, step, [state]) do
-      {:ok, new_state} ->
+    case :timer.tc(state.recipe_module, step, [state]) do
+      {elapsed, {:ok, new_state}} ->
+        maybe_on_success(step, new_state, elapsed)
         do_run(remaining_steps, new_state)
-      error ->
+      {elapsed, error} ->
+        maybe_on_error(step, error, state, elapsed)
         {:error, state.recipe_module.handle_error(step, error, state)}
     end
   end
 
-  defp maybe_log_step(step, state) do
-    if Keyword.get(state.run_opts, :log_steps) do
-      case state.log_function do
-        {module_name, function_name} ->
-          apply(module_name, function_name, [step, state])
-        function when is_function(function) ->
-          function.(step, state)
-      end
+  defp maybe_on_start(state) do
+    if Keyword.get(state.run_opts, :enable_telemetry) do
+      state.telemetry_module.on_start(state)
+    end
+  end
+
+  defp maybe_on_success(step, state, elapsed) do
+    if Keyword.get(state.run_opts, :enable_telemetry) do
+      state.telemetry_module.on_success(step, state, elapsed)
+    end
+  end
+
+  defp maybe_on_error(step, error, state, elapsed) do
+    if Keyword.get(state.run_opts, :enable_telemetry) do
+      state.telemetry_module.on_error(step, error, state, elapsed)
+    end
+  end
+
+  defp maybe_on_finish(state) do
+    if Keyword.get(state.run_opts, :enable_telemetry) do
+      state.telemetry_module.on_finish(state)
     end
   end
 end
