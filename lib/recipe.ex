@@ -271,6 +271,22 @@ defmodule Recipe do
   end
 
   @doc """
+  Unassigns (a.k.a. deletes) a specific key in the state assigns.
+
+      iex> state = Recipe.initial_state |> Recipe.assign(:user_id, 1)
+      iex> state.assigns.user_id
+      1
+      iex> new_state = Recipe.unassign(state, :user_id)
+      iex> new_state.assigns
+      %{}
+  """
+  @spec unassign(t, atom) :: t
+  def unassign(state, key) do
+    new_assigns = Map.delete(state.assigns, key)
+    %{state | assigns: new_assigns}
+  end
+
+  @doc """
   Runs a recipe, identified by a module which implements the `Recipe`
   behaviour, allowing to specify the initial state.
 
