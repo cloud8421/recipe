@@ -143,6 +143,8 @@ defmodule StartNewConversation do
 end
 ```
 
+For more examples, see: <https://github.com/cloud8421/recipe/tree/master/examples>.
+
 ## Telemetry
 
 A recipe run can be instrumented with callbacks for start, end and each step execution.
