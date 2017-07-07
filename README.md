@@ -187,6 +187,47 @@ defmodule Recipe.Debug do
 end
 ```
 
+## Application-wide telemetry configuration
+
+If you wish to control telemetry application-wide, you can do that by
+creating an application-specific wrapper for `Recipe` as follows:
+
+```elixir
+defmodule MyApp.Recipe do
+  def run(recipe_module, initial_state, run_opts \\ []) do
+    final_run_opts = Keyword.put_new(run_opts,
+                                     :enable_telemetry,
+                                     telemetry_enabled?())
+
+    Recipe.run(recipe_module, initial_state, final_run_opts)
+  end
+
+  def telemetry_on! do
+    Application.put_env(:recipe, :enable_telemetry, true)
+  end
+
+  def telemetry_off! do
+    Application.put_env(:recipe, :enable_telemetry, false)
+  end
+
+  defp telemetry_enabled? do
+    Application.get_env(:recipe, :enable_telemetry, false)
+  end
+end
+```
+
+This module supports using a default setting which can be toggled
+at runtime with `telemetry_on!/0` and `telemetry_off!/0`, overridable
+on a per-run basis by passing `enable_telemetry: false` as a third
+argument to `MyApp.Recipe.run/3`.
+
+You can also add static configuration to `config/config.exs`:
+
+```elixir
+config :recipe,
+  enable_telemetry: true
+```
+
 ## Development/Test
 
 - Initial setup can be done with `mix deps.get`
