@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 0.4.1 (07/07/2017)
+
+- Adds `Recipe.unassign/2`
+- Adds more examples of usage and configuration
+
 ### 0.4.0 (05/07/2017)
 
 - Replaces log functionality with proper telemetry,

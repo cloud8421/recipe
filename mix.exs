@@ -1,7 +1,7 @@
 defmodule Recipe.Mixfile do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.4.1"
   @description """
   A library to compose multi-step, reversible workflows.
   """
