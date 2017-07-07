@@ -202,7 +202,7 @@ defmodule Recipe do
         enable_telemetry: true
   """
 
-  alias Recipe.UUID
+  alias Recipe.{InvalidRecipe, UUID}
   require Logger
 
   @default_run_opts [enable_telemetry: false]
@@ -241,14 +241,6 @@ defmodule Recipe do
   """
   @callback handle_error(step, error, t) :: term
 
-  defmodule InvalidRecipe do
-    @moduledoc """
-    This exception is raised whenever a module that implements the `Recipe`
-    behaviour does not define a function definition for each listed step.
-    """
-    defexception [:message]
-  end
-
   defmacro __using__(_opts) do
     quote do
       @behaviour Recipe
@@ -257,6 +249,11 @@ defmodule Recipe do
 
       @doc false
       def __after_compile__(env, bytecode) do
+        unless Module.defines?(__MODULE__, {:steps, 0}) do
+          raise InvalidRecipe,
+            message: InvalidRecipe.missing_steps(__MODULE__)
+        end
+
         steps = __MODULE__.steps()
         definitions = Module.definitions_in(__MODULE__)
 
@@ -265,7 +262,7 @@ defmodule Recipe do
             :ok
           {:missing, missing_steps} ->
             raise InvalidRecipe,
-              message: "The recipe #{__MODULE__} misses step definitions for #{inspect missing_steps}"
+              message: InvalidRecipe.missing_step_definitions(__MODULE__, missing_steps)
         end
       end
 
