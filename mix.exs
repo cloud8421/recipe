@@ -1,4 +1,6 @@
 defmodule Recipe.Mixfile do
+  @moduledoc false
+
   use Mix.Project
 
   @version "0.4.1"
@@ -32,7 +34,7 @@ defmodule Recipe.Mixfile do
      {:dialyxir, "~> 0.5.0", only: :dev, runtime: false}]
   end
 
-  defp package() do
+  defp package do
     [maintainers: @maintainers,
      licenses: ["Apache 2.0"],
      links: %{"GitHub" => "https://github.com/cloud8421/recipe"}]
