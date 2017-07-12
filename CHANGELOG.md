@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### 0.4.2 (12/07/2017)
+
+- Extends compile-time checks to check for `steps/0`
+
 ### 0.4.1 (07/07/2017)
 
 - Adds `Recipe.unassign/2`
