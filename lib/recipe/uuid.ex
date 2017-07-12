@@ -11,7 +11,7 @@ defmodule Recipe.UUID do
   @doc """
   Generates a new v4 correlation uuid.
   """
-  def generate() do
+  def generate do
     <<u0::48, _::4, u1::12, _::2, u2::62>> = :crypto.strong_rand_bytes(16)
     <<u0::48, 4::4, u1::12, 2::2, u2::62>>
     |> uuid_to_string()

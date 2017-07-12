@@ -262,7 +262,8 @@ defmodule Recipe do
             :ok
           {:missing, missing_steps} ->
             raise InvalidRecipe,
-              message: InvalidRecipe.missing_step_definitions(__MODULE__, missing_steps)
+              message: InvalidRecipe.missing_step_definitions(__MODULE__,
+                                                              missing_steps)
         end
       end
 
@@ -351,7 +352,9 @@ defmodule Recipe do
     steps = recipe_module.steps()
     final_run_opts = Keyword.merge(initial_state.run_opts, run_opts)
     correlation_id = Keyword.get(run_opts, :correlation_id, UUID.generate())
-    telemetry_module = Keyword.get(run_opts, :telemetry_module, initial_state.telemetry_module)
+    telemetry_module = Keyword.get(run_opts,
+                                   :telemetry_module,
+                                   initial_state.telemetry_module)
 
     state = %{initial_state | recipe_module: recipe_module,
                               correlation_id: correlation_id,
