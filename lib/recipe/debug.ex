@@ -9,6 +9,7 @@ defmodule Recipe.Debug do
 
   require Logger
 
+  @doc false
   def on_start(state) do
     Logger.debug(fn() ->
       %{recipe_module: recipe,
@@ -18,6 +19,7 @@ defmodule Recipe.Debug do
     end)
   end
 
+  @doc false
   def on_finish(state) do
     Logger.debug(fn() ->
       %{recipe_module: recipe,
@@ -27,6 +29,7 @@ defmodule Recipe.Debug do
     end)
   end
 
+  @doc false
   def on_success(step, state, elapsed) do
     Logger.debug(fn() ->
       %{recipe_module: recipe,
@@ -36,6 +39,7 @@ defmodule Recipe.Debug do
     end)
   end
 
+  @doc false
   def on_error(step, error, state, elapsed) do
     Logger.error(fn() ->
       %{recipe_module: recipe,
