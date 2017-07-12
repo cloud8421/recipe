@@ -5,6 +5,7 @@ defmodule Recipe.InvalidRecipe do
   """
   defexception [:message]
 
+  @doc false
   def missing_steps(recipe_module) do
     """
 
@@ -20,6 +21,7 @@ defmodule Recipe.InvalidRecipe do
     """
   end
 
+  @doc false
   def missing_step_definitions(recipe_module, missing_steps) do
     [example_step | _rest] = missing_steps
 
