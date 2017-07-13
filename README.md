@@ -228,6 +228,52 @@ config :recipe,
   enable_telemetry: true
 ```
 
+## Type specifications
+
+If you use type specifications via Dialyzer, you can extend the types defined
+by Recipe to have better guarantees around your individual steps.
+
+In the example below specifications and types are added for steps and values
+inside assigns, so that it's possible for Dialyzer to provide more accurate results.
+
+```elixir
+defmodule Recipe.Example do
+  @moduledoc false
+
+  use Recipe
+
+  @type step :: :double
+  @type steps :: [step]
+  @type assigns :: %{number: integer}
+  @type state :: %Recipe{assigns: assigns}
+
+  @spec run(integer) :: {:ok, integer} | {:error, :not_an_integer}
+  def run(number) do
+    initial_state = Recipe.initial_state
+                    |> Recipe.assign(:number, number)
+
+    Recipe.run(__MODULE__, initial_state)
+  end
+
+  def steps, do: [:double]
+
+  @spec double(state) :: {:ok, state} | {:error, :not_an_integer}
+  def double(state) do
+    if is_integer(state.assigns.number) do
+      {:ok, Recipe.assign(state, :number, state.assigns.number * 2)}
+    else
+      {:error, :not_an_integer}
+    end
+  end
+
+  @spec handle_error(step, term, state) :: :ok
+  def handle_error(_step, error, _state), do: error
+
+  @spec handle_result(state) :: :ok
+  def handle_result(_state), do: :ok
+end
+```
+
 ## Development/Test
 
 - Initial setup can be done with `mix deps.get`
