@@ -219,7 +219,7 @@ defmodule Recipe do
   @type run_opts :: [{:enable_telemetry, boolean} | {:correlation_id, UUID.t}]
   @type function_name :: atom
   @type telemetry_module :: module
-  @type t :: %__MODULE__{assigns: %{},
+  @type t :: %__MODULE__{assigns: %{optional(atom) => term},
                          recipe_module: module,
                          correlation_id: nil | Recipe.UUID.t,
                          telemetry_module: telemetry_module,
