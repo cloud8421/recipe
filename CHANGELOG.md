@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### 0.4.3 (13/07/2017)
+
+- Fixes type specification for a recipe's assigns key
+
 ### 0.4.2 (12/07/2017)
 
 - Extends compile-time checks to check for `steps/0`
