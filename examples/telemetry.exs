@@ -29,7 +29,9 @@ end
 initial_state = Recipe.initial_state
                 |> Recipe.assign(:number, 5)
 
-{:ok, correlation_id, result} = Recipe.run(AdvancedMath, initial_state, enable_telemetry: true)
+{:ok, correlation_id, result} = Recipe.run(AdvancedMath,
+                                           initial_state,
+                                           enable_telemetry: true)
 
 Process.sleep(10) # This is just display logs above the result
 
