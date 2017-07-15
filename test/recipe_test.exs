@@ -43,7 +43,23 @@ defmodule RecipeTest do
     end
   end
 
-  describe "recipe run" do
+  defmodule Failing do
+    use Recipe
+
+    def steps, do: [:fail]
+
+    def handle_result(state), do: state
+
+    def handle_error(step, error, _state) do
+      {step, error}
+    end
+
+    def fail(state) do
+      {:error, :not_magic_number}
+    end
+  end
+
+  describe "successful recipe run" do
     test "returns the final result" do
       state = Recipe.initial_state
               |> Recipe.assign(:number, 4)
@@ -58,6 +74,15 @@ defmodule RecipeTest do
 
       assert {:ok, correlation_id, 32} ==
         Recipe.run(Successful, state, correlation_id: correlation_id)
+    end
+  end
+
+  describe "fail recipe run" do
+    test "returns the desired error" do
+      state = Recipe.initial_state
+              |> Recipe.assign(:number, 4)
+
+      assert {:error, {:fail, {:error, :not_magic_number}}} == Recipe.run(Failing, state)
     end
   end
 
@@ -84,6 +109,38 @@ defmodule RecipeTest do
       assert_receive {:on_success, :square}
       assert_receive {:on_success, :double}
       assert_receive :on_finish
+    end
+  end
+
+  describe "compile time warnings" do
+    test "it checks for a valid steps/0 function" do
+      assert_raise Recipe.InvalidRecipe, fn() ->
+        defmodule InvalidModule do
+          use Recipe
+
+          def handle_error(_, _, _), do: :ok
+          def handle_result(_), do: :ok
+        end
+      end
+    after
+      :code.purge RecipeTest.InvalidModule
+      :code.delete RecipeTest.InvalidModule
+    end
+
+    test "it checks for steps implementation" do
+      assert_raise Recipe.InvalidRecipe, fn() ->
+        defmodule InvalidModule do
+          use Recipe
+
+          def steps, do: [:double]
+
+          def handle_error(_, _, _), do: :ok
+          def handle_result(_), do: :ok
+        end
+      end
+    after
+      :code.purge RecipeTest.InvalidModule
+      :code.delete RecipeTest.InvalidModule
     end
   end
 end

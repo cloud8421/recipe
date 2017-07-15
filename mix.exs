@@ -20,6 +20,8 @@ defmodule Recipe.Mixfile do
      source_url: "https://github.com/cloud8421/recipe",
      homepage_url: "https://github.com/cloud8421/recipe",
      docs: [main: "readme", extras: ["README.md"]],
+     test_coverage: [tool: ExCoveralls],
+     preferred_cli_env: [coveralls: :test],
      deps: deps()]
   end
 
@@ -31,6 +33,7 @@ defmodule Recipe.Mixfile do
     [{:ex_doc, "~> 0.16.1", only: :docs, runtime: false},
      {:inch_ex, "~> 0.5.6", only: :docs, runtime: false},
      {:credo, "~> 0.8.1", only: :dev, runtime: false},
+     {:excoveralls, "~> 0.7.1", only: :test, runtime: false},
      {:dialyxir, "~> 0.5.0", only: :dev, runtime: false}]
   end
 
