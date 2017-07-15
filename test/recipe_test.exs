@@ -86,4 +86,36 @@ defmodule RecipeTest do
       assert_receive :on_finish
     end
   end
+
+  describe "compile time warnings" do
+    test "it checks for a valid steps/0 function" do
+      assert_raise Recipe.InvalidRecipe, fn() ->
+        defmodule InvalidModule do
+          use Recipe
+
+          def handle_error(_, _, _), do: :ok
+          def handle_result(_), do: :ok
+        end
+      end
+    after
+      :code.purge RecipeTest.InvalidModule
+      :code.delete RecipeTest.InvalidModule
+    end
+
+    test "it checks for steps implementation" do
+      assert_raise Recipe.InvalidRecipe, fn() ->
+        defmodule InvalidModule do
+          use Recipe
+
+          def steps, do: [:double]
+
+          def handle_error(_, _, _), do: :ok
+          def handle_result(_), do: :ok
+        end
+      end
+    after
+      :code.purge RecipeTest.InvalidModule
+      :code.delete RecipeTest.InvalidModule
+    end
+  end
 end
