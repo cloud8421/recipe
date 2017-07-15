@@ -43,7 +43,23 @@ defmodule RecipeTest do
     end
   end
 
-  describe "recipe run" do
+  defmodule Failing do
+    use Recipe
+
+    def steps, do: [:fail]
+
+    def handle_result(state), do: state
+
+    def handle_error(step, error, _state) do
+      {step, error}
+    end
+
+    def fail(state) do
+      {:error, :not_magic_number}
+    end
+  end
+
+  describe "successful recipe run" do
     test "returns the final result" do
       state = Recipe.initial_state
               |> Recipe.assign(:number, 4)
@@ -58,6 +74,15 @@ defmodule RecipeTest do
 
       assert {:ok, correlation_id, 32} ==
         Recipe.run(Successful, state, correlation_id: correlation_id)
+    end
+  end
+
+  describe "fail recipe run" do
+    test "returns the desired error" do
+      state = Recipe.initial_state
+              |> Recipe.assign(:number, 4)
+
+      assert {:error, {:fail, {:error, :not_magic_number}}} == Recipe.run(Failing, state)
     end
   end
 
