@@ -54,7 +54,7 @@ defmodule RecipeTest do
       {step, error}
     end
 
-    def fail(state) do
+    def fail(_state) do
       {:error, :not_magic_number}
     end
   end
