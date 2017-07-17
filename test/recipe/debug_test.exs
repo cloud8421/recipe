@@ -16,8 +16,6 @@ defmodule Recipe.DebugTest do
     assert capture_log(fn() ->
       Recipe.Debug.on_start(@state)
     end) == expected
-
-    # [debug] recipe=RecipeTest.Successful evt=step correlation_id=#{correlation_id} step=double assigns=%{number: 32}
   end
 
   test "on_finish/1" do
