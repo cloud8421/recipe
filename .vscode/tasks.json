@@ -1,14 +1,11 @@
 {
   "version": "2.0.0",
-  "command": "mix",
   "suppressTaskName": true,
   "tasks": [
     {
       "type":"shell",
+      "command": "mix compile",
       "taskName": "compile",
-      "args": [
-        "compile"
-      ],
       "problemMatcher": [
         "$mixCompileError",
         "$mixCompileWarning"
@@ -24,9 +21,41 @@
     {
       "type":"shell",
       "taskName": "test",
-      "args": [
-        "test"
+      "command": "mix test",
+      "problemMatcher": [
+        "$mixCompileError",
+        "$mixCompileWarning",
+        "$mixTestFailure"
       ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+         "reveal": "always"
+      }
+    },
+    {
+      "type":"shell",
+      "taskName": "test file",
+      "command": "mix test ${relativeFile}",
+      "problemMatcher": [
+        "$mixCompileError",
+        "$mixCompileWarning",
+        "$mixTestFailure"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+         "reveal": "always"
+      }
+    },
+    {
+      "type":"shell",
+      "taskName": "test file at line",
+      "command": "mix test ${relativeFile}:${lineNumber}",
       "problemMatcher": [
         "$mixCompileError",
         "$mixCompileWarning",
