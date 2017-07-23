@@ -20,6 +20,19 @@
     },
     {
       "type":"shell",
+      "command": "mix dialyzer",
+      "taskName": "dialyzer",
+      "problemMatcher": [
+        "$mixCompileError",
+        "$mixCompileWarning"
+      ],
+      "group": "build",
+      "presentation": {
+         "reveal": "silent"
+      }
+    },
+    {
+      "type":"shell",
       "taskName": "test",
       "command": "mix test",
       "problemMatcher": [
@@ -44,10 +57,7 @@
         "$mixCompileWarning",
         "$mixTestFailure"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
+      "group": "test",
       "presentation": {
          "reveal": "always"
       }
@@ -61,10 +71,7 @@
         "$mixCompileWarning",
         "$mixTestFailure"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
+      "group": "test",
       "presentation": {
          "reveal": "always"
       }
