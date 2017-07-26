@@ -283,6 +283,16 @@ end
 - Run credo with `mix credo`
 - Build docs with `MIX_ENV=docs mix docs`
 
+## Docker support
+
+You can run all of commands above via Docker:
+
+`docker run -it --rm -v "$PWD":/usr/src/recipe -w /usr/src/recipe elixir <your-mix-command>`
+
+For example you can run tests with:
+
+`docker run -it --rm -v "$PWD":/usr/src/recipe -w /usr/src/recipe elixir mix do local.hex --force, deps.get && mix test`
+
 ## Special thanks
 
 Special thanks go to the following people for their help in the initial design phase for this library:
