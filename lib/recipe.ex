@@ -351,8 +351,8 @@ defmodule Recipe do
   def run(recipe_module, initial_state, run_opts \\ []) do
     steps = recipe_module.steps()
     final_run_opts = Keyword.merge(initial_state.run_opts, run_opts)
-    correlation_id = Keyword.get(run_opts, :correlation_id, UUID.generate())
-    telemetry_module = Keyword.get(run_opts,
+    correlation_id = Keyword.get(final_run_opts, :correlation_id, UUID.generate())
+    telemetry_module = Keyword.get(final_run_opts,
                                    :telemetry_module,
                                    initial_state.telemetry_module)
 
