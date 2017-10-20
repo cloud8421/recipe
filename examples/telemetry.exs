@@ -26,14 +26,14 @@ defmodule AdvancedMath do
   def handle_error(_step, _error, _state), do: :ok
 end
 
-initial_state = Recipe.initial_state
-                |> Recipe.assign(:number, 5)
+initial_state =
+  Recipe.initial_state()
+  |> Recipe.assign(:number, 5)
 
-{:ok, correlation_id, result} = Recipe.run(AdvancedMath,
-                                           initial_state,
-                                           enable_telemetry: true)
+{:ok, correlation_id, result} = Recipe.run(AdvancedMath, initial_state, enable_telemetry: true)
 
-Process.sleep(10) # This is just display logs above the result
+# This is just display logs above the result
+Process.sleep(10)
 
 IO.puts("correlation id: #{correlation_id}")
 IO.puts("result: #{result}")
