@@ -61,26 +61,30 @@ defmodule RecipeTest do
 
   describe "successful recipe run" do
     test "returns the final result" do
-      state = Recipe.initial_state
-              |> Recipe.assign(:number, 4)
+      state =
+        Recipe.initial_state()
+        |> Recipe.assign(:number, 4)
 
       assert {:ok, _, 32} = Recipe.run(Successful, state)
     end
 
     test "it reuses a correlation id if passed" do
       correlation_id = Recipe.UUID.generate()
-      state = Recipe.initial_state
-              |> Recipe.assign(:number, 4)
+
+      state =
+        Recipe.initial_state()
+        |> Recipe.assign(:number, 4)
 
       assert {:ok, correlation_id, 32} ==
-        Recipe.run(Successful, state, correlation_id: correlation_id)
+               Recipe.run(Successful, state, correlation_id: correlation_id)
     end
   end
 
   describe "fail recipe run" do
     test "returns the desired error" do
-      state = Recipe.initial_state
-              |> Recipe.assign(:number, 4)
+      state =
+        Recipe.initial_state()
+        |> Recipe.assign(:number, 4)
 
       assert {:error, {:fail, {:error, :not_magic_number}}} == Recipe.run(Failing, state)
     end
@@ -88,7 +92,7 @@ defmodule RecipeTest do
 
   describe "recipe state" do
     test "defaults" do
-      state = Recipe.initial_state
+      state = Recipe.initial_state()
 
       assert state.telemetry_module == Recipe.Debug
       assert state.run_opts == [enable_telemetry: false]
@@ -98,12 +102,18 @@ defmodule RecipeTest do
   describe "telemetry support" do
     test "can use a custom telemetry module" do
       correlation_id = Recipe.UUID.generate()
-      state = Recipe.initial_state
-              |> Recipe.assign(:number, 4)
 
-      Recipe.run(Successful, state, enable_telemetry: true,
-                                    telemetry_module: Successful.Debug,
-                                    correlation_id: correlation_id)
+      state =
+        Recipe.initial_state()
+        |> Recipe.assign(:number, 4)
+
+      Recipe.run(
+        Successful,
+        state,
+        enable_telemetry: true,
+        telemetry_module: Successful.Debug,
+        correlation_id: correlation_id
+      )
 
       assert_receive :on_start
       assert_receive {:on_success, :square}
@@ -114,7 +124,7 @@ defmodule RecipeTest do
 
   describe "compile time warnings" do
     test "it checks for a valid steps/0 function" do
-      assert_raise Recipe.InvalidRecipe, fn() ->
+      assert_raise Recipe.InvalidRecipe, fn ->
         defmodule InvalidModule do
           use Recipe
 
@@ -123,12 +133,12 @@ defmodule RecipeTest do
         end
       end
     after
-      :code.purge RecipeTest.InvalidModule
-      :code.delete RecipeTest.InvalidModule
+      :code.purge(RecipeTest.InvalidModule)
+      :code.delete(RecipeTest.InvalidModule)
     end
 
     test "it checks for steps implementation" do
-      assert_raise Recipe.InvalidRecipe, fn() ->
+      assert_raise Recipe.InvalidRecipe, fn ->
         defmodule InvalidModule do
           use Recipe
 
@@ -139,8 +149,8 @@ defmodule RecipeTest do
         end
       end
     after
-      :code.purge RecipeTest.InvalidModule
-      :code.delete RecipeTest.InvalidModule
+      :code.purge(RecipeTest.InvalidModule)
+      :code.delete(RecipeTest.InvalidModule)
     end
   end
 end

@@ -9,15 +9,15 @@ defmodule Recipe.InvalidRecipe do
   def missing_steps(recipe_module) do
     """
 
-        #{IO.ANSI.red}
-        The recipe #{inspect recipe_module} doesn't define
+        #{IO.ANSI.red()}
+        The recipe #{inspect(recipe_module)} doesn't define
         the steps to execute.
 
         To fix this, you need to define a steps/0 function.
 
         For example:
 
-        def steps, do: [:validate, :save]#{IO.ANSI.default_color}
+        def steps, do: [:validate, :save]#{IO.ANSI.default_color()}
     """
   end
 
@@ -27,11 +27,11 @@ defmodule Recipe.InvalidRecipe do
 
     """
 
-        #{IO.ANSI.red}
-        The recipe #{inspect recipe_module} doesn't have step definitions
+        #{IO.ANSI.red()}
+        The recipe #{inspect(recipe_module)} doesn't have step definitions
         for the following functions:
 
-        #{inspect missing_steps}
+        #{inspect(missing_steps)}
 
         To fix this, you need to add the relevant
         function definitions. For example:
@@ -39,7 +39,7 @@ defmodule Recipe.InvalidRecipe do
         def #{example_step}(state) do
           # your code here
           {:ok, new_state}
-        end#{IO.ANSI.default_color}
+        end#{IO.ANSI.default_color()}
     """
   end
 end

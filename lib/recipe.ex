@@ -216,14 +216,16 @@ defmodule Recipe do
   @type step :: atom
   @type recipe_module :: atom
   @type error :: term
-  @type run_opts :: [{:enable_telemetry, boolean} | {:correlation_id, UUID.t}]
+  @type run_opts :: [{:enable_telemetry, boolean} | {:correlation_id, UUID.t()}]
   @type function_name :: atom
   @type telemetry_module :: module
-  @type t :: %__MODULE__{assigns: %{optional(atom) => term},
-                         recipe_module: module,
-                         correlation_id: nil | Recipe.UUID.t,
-                         telemetry_module: telemetry_module,
-                         run_opts: Recipe.run_opts}
+  @type t :: %__MODULE__{
+          assigns: %{optional(atom) => term},
+          recipe_module: module,
+          correlation_id: nil | Recipe.UUID.t(),
+          telemetry_module: telemetry_module,
+          run_opts: Recipe.run_opts()
+        }
 
   @doc """
   Lists all steps included in the recipe, e.g. `[:square, :double]`
@@ -250,8 +252,7 @@ defmodule Recipe do
       @doc false
       def __after_compile__(env, bytecode) do
         unless Module.defines?(__MODULE__, {:steps, 0}) do
-          raise InvalidRecipe,
-            message: InvalidRecipe.missing_steps(__MODULE__)
+          raise InvalidRecipe, message: InvalidRecipe.missing_steps(__MODULE__)
         end
 
         steps = __MODULE__.steps()
@@ -260,21 +261,22 @@ defmodule Recipe do
         case all_steps_defined?(definitions, steps) do
           :ok ->
             :ok
+
           {:missing, missing_steps} ->
             raise InvalidRecipe,
-              message: InvalidRecipe.missing_step_definitions(__MODULE__,
-                                                              missing_steps)
+              message: InvalidRecipe.missing_step_definitions(__MODULE__, missing_steps)
         end
       end
 
       defp all_steps_defined?(definitions, steps) do
-        missing_steps = Enum.reduce(steps, [], fn(step, missing_steps) ->
-          case Keyword.get(definitions, step, :not_defined) do
-            :not_defined -> [step | missing_steps]
-            arity when arity !== 1 -> [step | missing_steps]
-            1 -> missing_steps
-          end
-        end)
+        missing_steps =
+          Enum.reduce(steps, [], fn step, missing_steps ->
+            case Keyword.get(definitions, step, :not_defined) do
+              :not_defined -> [step | missing_steps]
+              arity when arity !== 1 -> [step | missing_steps]
+              1 -> missing_steps
+            end
+          end)
 
         case missing_steps do
           [] -> :ok
@@ -347,19 +349,22 @@ defmodule Recipe do
   Recipe.run(Workflow, Recipe.initial_state(), enable_telemetry: true)
   ```
   """
-  @spec run(recipe_module, t, run_opts) :: {:ok, UUID.t, term} | {:error, term}
+  @spec run(recipe_module, t, run_opts) :: {:ok, UUID.t(), term} | {:error, term}
   def run(recipe_module, initial_state, run_opts \\ []) do
     steps = recipe_module.steps()
     final_run_opts = Keyword.merge(initial_state.run_opts, run_opts)
     correlation_id = Keyword.get(final_run_opts, :correlation_id, UUID.generate())
-    telemetry_module = Keyword.get(final_run_opts,
-                                   :telemetry_module,
-                                   initial_state.telemetry_module)
 
-    state = %{initial_state | recipe_module: recipe_module,
-                              correlation_id: correlation_id,
-                              telemetry_module: telemetry_module,
-                              run_opts: final_run_opts}
+    telemetry_module =
+      Keyword.get(final_run_opts, :telemetry_module, initial_state.telemetry_module)
+
+    state = %{
+      initial_state
+      | recipe_module: recipe_module,
+        correlation_id: correlation_id,
+        telemetry_module: telemetry_module,
+        run_opts: final_run_opts
+    }
 
     maybe_on_start(state)
     do_run(steps, state)
@@ -369,11 +374,13 @@ defmodule Recipe do
     maybe_on_finish(state)
     {:ok, state.correlation_id, state.recipe_module.handle_result(state)}
   end
+
   defp do_run([step | remaining_steps], state) do
     case :timer.tc(state.recipe_module, step, [state]) do
       {elapsed, {:ok, new_state}} ->
         maybe_on_success(step, new_state, elapsed)
         do_run(remaining_steps, new_state)
+
       {elapsed, error} ->
         maybe_on_error(step, error, state, elapsed)
         {:error, state.recipe_module.handle_error(step, error, state)}
