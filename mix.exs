@@ -15,7 +15,7 @@ defmodule Recipe.Mixfile do
       version: @version,
       description: @description,
       package: package(),
-      elixir: "~> 1.4",
+      elixir: "~> 1.5",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       source_url: "https://github.com/cloud8421/recipe",
