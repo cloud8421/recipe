@@ -1,5 +1,11 @@
 ## CHANGELOG
 
+### 0.4.4 (16/02/2018)
+
+- Bugfix: use correct options when running recipe
+- Improvements to test suite
+- Requires at least Elixir 1.5
+
 ### 0.4.3 (13/07/2017)
 
 - Fixes type specification for a recipe's assigns key
