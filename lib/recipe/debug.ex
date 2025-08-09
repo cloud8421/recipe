@@ -30,9 +30,7 @@ defmodule Recipe.Debug do
     Logger.debug(fn ->
       %{recipe_module: recipe, correlation_id: id, assigns: assigns} = state
 
-      "recipe=#{inspect(recipe)} evt=step correlation_id=#{id} step=#{step} assigns=#{
-        inspect(assigns)
-      } duration=#{elapsed}"
+      "recipe=#{inspect(recipe)} evt=step correlation_id=#{id} step=#{step} assigns=#{inspect(assigns)} duration=#{elapsed}"
     end)
   end
 
@@ -41,9 +39,7 @@ defmodule Recipe.Debug do
     Logger.error(fn ->
       %{recipe_module: recipe, correlation_id: id, assigns: assigns} = state
 
-      "recipe=#{inspect(recipe)} evt=error correlation_id=#{id} step=#{step} error=#{
-        inspect(error)
-      } assigns=#{inspect(assigns)} duration=#{elapsed}"
+      "recipe=#{inspect(recipe)} evt=error correlation_id=#{id} step=#{step} error=#{inspect(error)} assigns=#{inspect(assigns)} duration=#{elapsed}"
     end)
   end
 end
