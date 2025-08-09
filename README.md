@@ -1,8 +1,5 @@
 # Recipe
 
-[![Docs Status](https://inch-ci.org/github/cloud8421/recipe.svg?branch=inch-ci-support)](https://inch-ci.org/github/cloud8421/recipe)
-[![Coverage Status](https://coveralls.io/repos/github/cloud8421/recipe/badge.svg?branch=coverage)](https://coveralls.io/github/cloud8421/recipe?branch=coverage)
-
 ## Intro
 
 The `Recipe` module allows implementing multi-step, reversible workflows.
