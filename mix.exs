@@ -40,7 +40,7 @@ defmodule Recipe.Mixfile do
   defp package do
     [
       maintainers: @maintainers,
-      licenses: ["Apache 2.0"],
+      licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/cloud8421/recipe"}
     ]
   end
