@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### 0.5.0 (09/08/2025)
+
+- Requires at least Elixir 1.18
+
 ### 0.4.4 (16/02/2018)
 
 - Bugfix: use correct options when running recipe
