@@ -1,6 +1,0 @@
-{
-  "skip_files": [
-    "lib/recipe/uuid.ex",
-    "lib/recipe/telemetry.ex"
-  ]
-}
