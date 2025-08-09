@@ -126,8 +126,8 @@ defmodule NestedRecipe do
       end
     end
 
-    defdelegate replace_revision(state), to: CI
-    defdelegate restart_service(state), to: CI
+    defdelegate replace_revision(state), to: Build
+    defdelegate restart_service(state), to: Build
 
     def handle_result(state) do
       {:rolled_back, state.assigns.app, state.assigns.revision_numver}
