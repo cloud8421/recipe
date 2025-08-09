@@ -203,6 +203,7 @@ defmodule Recipe do
   """
 
   alias Recipe.{InvalidRecipe, UUID}
+
   require Logger
 
   @default_run_opts [enable_telemetry: false]
@@ -251,7 +252,7 @@ defmodule Recipe do
 
       @doc false
       def __after_compile__(env, bytecode) do
-        unless Module.defines?(__MODULE__, {:steps, 0}) do
+        if !Module.defines?(__MODULE__, {:steps, 0}) do
           raise InvalidRecipe, message: InvalidRecipe.missing_steps(__MODULE__)
         end
 

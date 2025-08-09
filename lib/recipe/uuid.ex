@@ -39,7 +39,7 @@ defmodule Recipe.UUID do
 
   defp binary_to_hex_list(binary) do
     :binary.bin_to_list(binary)
-    |> list_to_hex_str
+    |> list_to_hex_str()
   end
 
   defp list_to_hex_str([]) do
