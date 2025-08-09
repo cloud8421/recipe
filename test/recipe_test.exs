@@ -59,13 +59,13 @@ defmodule RecipeTest do
     end
   end
 
-  describe "successful recipe run" do
+  describe "Successful recipe run" do
     test "returns the final result" do
       state =
         Recipe.initial_state()
         |> Recipe.assign(:number, 4)
 
-      assert {:ok, _, 32} = Recipe.run(Successful, state)
+      assert {:ok, _correlation_id, 32} = Recipe.run(Successful, state)
     end
 
     test "it reuses a correlation id if passed" do
@@ -80,7 +80,7 @@ defmodule RecipeTest do
     end
   end
 
-  describe "fail recipe run" do
+  describe "Failing recipe run" do
     test "returns the desired error" do
       state =
         Recipe.initial_state()
