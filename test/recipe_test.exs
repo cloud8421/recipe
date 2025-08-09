@@ -124,30 +124,63 @@ defmodule RecipeTest do
 
   describe "compile time warnings" do
     test "it checks for a valid steps/0 function" do
-      assert_raise Recipe.InvalidRecipe, fn ->
-        defmodule InvalidModule do
-          use Recipe
+      exception =
+        assert_raise Recipe.InvalidRecipe, fn ->
+          defmodule InvalidModule do
+            use Recipe
 
-          def handle_error(_, _, _), do: :ok
-          def handle_result(_), do: :ok
+            def handle_error(_, _, _), do: :ok
+            def handle_result(_), do: :ok
+          end
         end
-      end
+
+      assert exception.message ==
+               """
+
+                   #{IO.ANSI.red()}
+                   The recipe RecipeTest.InvalidModule doesn't define
+                   the steps to execute.
+
+                   To fix this, you need to define a steps/0 function.
+
+                   For example:
+
+                   def steps, do: [:validate, :save]#{IO.ANSI.default_color()}
+               """
     after
       :code.purge(RecipeTest.InvalidModule)
       :code.delete(RecipeTest.InvalidModule)
     end
 
     test "it checks for steps implementation" do
-      assert_raise Recipe.InvalidRecipe, fn ->
-        defmodule InvalidModule do
-          use Recipe
+      exception =
+        assert_raise Recipe.InvalidRecipe, fn ->
+          defmodule InvalidModule do
+            use Recipe
 
-          def steps, do: [:double]
+            def steps, do: [:double]
 
-          def handle_error(_, _, _), do: :ok
-          def handle_result(_), do: :ok
+            def handle_error(_, _, _), do: :ok
+            def handle_result(_), do: :ok
+          end
         end
-      end
+
+      assert exception.message == """
+
+                 #{IO.ANSI.red()}
+                 The recipe RecipeTest.InvalidModule doesn't have step definitions
+                 for the following functions:
+
+                 [:double]
+
+                 To fix this, you need to add the relevant
+                 function definitions. For example:
+
+                 def double(state) do
+                   # your code here
+                   {:ok, new_state}
+                 end#{IO.ANSI.default_color()}
+             """
     after
       :code.purge(RecipeTest.InvalidModule)
       :code.delete(RecipeTest.InvalidModule)
