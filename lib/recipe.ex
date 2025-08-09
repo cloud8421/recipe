@@ -35,7 +35,7 @@ defmodule Recipe do
 
   ### Core ideas
 
-  - A workflow as a set of discreet steps
+  - A recipe represents a workflow with a set of discreet steps
   - Each step can have a specific error handling scenario
   - Each step is a separate function that receives a state
     with the result of all previous steps
